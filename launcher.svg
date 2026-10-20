@@ -1,12 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xhtml="http://www.w3.org/1999/xhtml" width="100vw" height="100vh" viewBox="0 0 1280 900" role="img" aria-label="Fieldnote launcher">
+  <title>Fieldnote / Launcher</title>
   <foreignObject id="app-frame" x="0" y="0" width="1280" height="900">
-    <xhtml:html>
-      <xhtml:head>
-        <xhtml:meta charset="utf-8" />
-        <xhtml:meta name="viewport" content="width=device-width, initial-scale=1" />
-        <xhtml:title>Fieldnote / Launcher</xhtml:title>
+    <xhtml:div xmlns="http://www.w3.org/1999/xhtml" id="app-root" class="app-root">
         <xhtml:style><![CDATA[
-          :root {
+          .app-root {
             color-scheme: dark;
             --ink: #e9eee6;
             --muted: #8d9a8e;
@@ -20,8 +17,8 @@
             --coral: #ff8768;
           }
           * { box-sizing: border-box; }
-          html, body { width: 100%; height: 100%; margin: 0; }
-          body {
+          .app-root { width: 100%; height: 100%; margin: 0; overflow: auto; }
+          .app-root {
             overflow: auto;
             background-color: var(--page);
             background-image: linear-gradient(rgba(106, 143, 116, .045) 1px, transparent 1px), linear-gradient(90deg, rgba(106, 143, 116, .045) 1px, transparent 1px);
@@ -88,7 +85,7 @@
           #status { position: fixed; right: 22px; bottom: 19px; z-index: 3; max-width: min(420px, calc(100vw - 36px)); padding: 11px 15px; border: 1px solid #526a50; border-radius: 3px; background: #1b2921; color: var(--ink); box-shadow: 0 9px 36px #0008; opacity: 0; pointer-events: none; transform: translateY(7px); transition: opacity .2s, transform .2s; }
           #status.show { opacity: 1; transform: translateY(0); }
           #file-input { display: none; }
-          .dragging .shell { outline: 2px dashed var(--lime); outline-offset: -12px; }
+          .shell.dragging { outline: 2px dashed var(--lime); outline-offset: -12px; }
           @keyframes rise { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: translateY(0); } }
           @media (max-width: 760px) {
             .shell { padding: 0 22px 36px; }
@@ -113,8 +110,6 @@
           }
           @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
         ]]></xhtml:style>
-      </xhtml:head>
-      <xhtml:body>
         <div class="shell" id="shell">
           <header class="topbar">
             <div class="brand"><span class="brand-mark"><span>f</span></span><span>Fieldnote</span></div>
@@ -176,6 +171,11 @@
             const input = document.getElementById("file-input");
             const status = document.getElementById("status");
             let noticeTimer;
+            const XHTML_NS = "http://www.w3.org/1999/xhtml";
+
+            function createHtmlElement(tagName) {
+              return document.createElementNS(XHTML_NS, tagName);
+            }
 
             function notify(message) {
               status.textContent = message;
@@ -249,20 +249,20 @@
             }
 
             function makeCard(record, index) {
-              const card = document.createElement("article");
+              const card = createHtmlElement("article");
               card.className = "file-card";
               card.style.animationDelay = `${Math.min(index * 35, 210)}ms`;
 
-              const top = document.createElement("div");
+              const top = createHtmlElement("div");
               top.className = "file-top";
-              const icon = document.createElement("div");
+              const icon = createHtmlElement("div");
               icon.className = "file-icon";
               icon.innerHTML = iconMarkup();
-              const fileType = document.createElement("span");
+              const fileType = createHtmlElement("span");
               fileType.className = "file-type";
               fileType.textContent = (record.name.split(".").pop() || "file").slice(0, 12).toUpperCase();
               icon.append(fileType);
-              const remove = document.createElement("button");
+              const remove = createHtmlElement("button");
               remove.className = "icon-button";
               remove.type = "button";
               remove.title = `Delete ${record.name} from cache`;
@@ -275,18 +275,18 @@
               });
               top.append(icon, remove);
 
-              const name = document.createElement("h3");
+              const name = createHtmlElement("h3");
               name.className = "file-name";
               name.title = record.name;
               name.textContent = record.name;
-              const meta = document.createElement("div");
+              const meta = createHtmlElement("div");
               meta.className = "file-meta";
-              const size = document.createElement("span");
+              const size = createHtmlElement("span");
               size.textContent = formatSize(record.size);
-              const date = document.createElement("span");
+              const date = createHtmlElement("span");
               date.textContent = formatDate(record.addedAt);
               meta.append(size, date);
-              const launch = document.createElement("button");
+              const launch = createHtmlElement("button");
               launch.className = "launch-button";
               launch.type = "button";
               launch.innerHTML = 'Launch <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10" /></svg>';
@@ -312,7 +312,7 @@
               document.getElementById("total-size").textContent = formatSize(bytes);
               library.replaceChildren();
               if (files.length === 0) {
-                const empty = document.createElement("div");
+                const empty = createHtmlElement("div");
                 empty.className = "empty";
                 empty.innerHTML = '<div class="empty-inner"><div class="empty-mark"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7 9m5-5 5 5M5 15v5h14v-5" /></svg></div><h3>Your shelf is waiting.</h3><p>Open the shared folder, download what you need, then add those files here.</p><p class="drop-hint">You can also drop files anywhere on this window.</p></div>';
                 library.append(empty);
@@ -359,14 +359,14 @@
 
             window.addEventListener("dragover", event => {
               event.preventDefault();
-              document.body.classList.add("dragging");
+              document.getElementById("shell").classList.add("dragging");
             });
             window.addEventListener("dragleave", event => {
-              if (event.relatedTarget === null) document.body.classList.remove("dragging");
+              if (event.relatedTarget === null) document.getElementById("shell").classList.remove("dragging");
             });
             window.addEventListener("drop", async event => {
               event.preventDefault();
-              document.body.classList.remove("dragging");
+              document.getElementById("shell").classList.remove("dragging");
               await importFiles(event.dataTransfer.files);
             });
 
@@ -388,7 +388,6 @@
             });
           })();
         ]]></script>
-      </xhtml:body>
-    </xhtml:html>
+    </xhtml:div>
   </foreignObject>
 </svg>
